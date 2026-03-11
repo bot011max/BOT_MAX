@@ -1,0 +1,93 @@
+medical-bot/ (папка на рабочем столе)
+│
+├── .github/
+│   └── workflows/
+│       ├── test-go.yml
+│       ├── test-python.yml
+│       ├── integration.yml
+│       └── security.yml
+│
+├── cmd/
+│   └── server/
+│       └── main.go
+│
+├── internal/
+│   ├── api/
+│   │   ├── auth.go
+│   │   ├── patient.go
+│   │   ├── doctor.go
+│   │   └── prescription.go
+│   ├── models/
+│   │   ├── user.go
+│   │   ├── patient.go
+│   │   ├── medical_record.go
+│   │   └── prescription.go
+│   ├── middleware/
+│   │   ├── auth.go
+│   │   ├── rbac.go
+│   │   └── audit.go
+│   └── services/
+│       ├── safety.go
+│       ├── payment.go
+│       └── mis_integration.go
+│
+├── microservices/
+│   ├── voice/
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
+│   ├── ocr/
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
+│   └── llm/
+│       ├── app.py
+│       ├── requirements.txt
+│       └── Dockerfile
+│
+├── web/
+│   ├── templates/
+│   │   ├── patient_dashboard.html
+│   │   ├── doctor_dashboard.html
+│   │   └── clinic_dashboard.html
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   ├── js/
+│   │   │   └── main.js
+│   │   └── images/
+│   │       └── logo.png
+│   └── index.html
+│
+├── migrations/
+│   ├── 001_init.sql
+│   ├── 002_add_users.sql
+│   └── 003_add_subscriptions.sql
+│
+├── tests/
+│   ├── unit/
+│   │   └── example_test.go
+│   ├── integration/
+│   │   └── api_test.go
+│   ├── fixtures/
+│   │   ├── sample_audio/
+│   │   │   └── test.wav
+│   │   └── sample_lab/
+│   │       └── test.pdf
+│   └── load/
+│       └── load_test.go
+│
+├── scripts/
+│   ├── backup.sh
+│   ├── deploy.sh
+│   └── seed_data.sql
+│
+├── docker-compose.yml
+├── docker-compose.test.yml
+├── Dockerfile
+├── go.mod
+├── go.sum
+├── Makefile
+├── .env.example
+├── .gitignore
+└── README.md

@@ -1,0 +1,38 @@
+# Временные файлы
+*.log
+tmp/
+*.tmp
+*.temp
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Секреты
+.env
+*.key
+*.pem
+*.crt
+
+# Бинарные файлы
+medical-bot
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Зависимости
+vendor/
+node_modules/
+
+# Тестовые отчеты
+coverage.txt
+coverage.html
+*.out
+
+# Docker
+*.pid
+.dockerignore
