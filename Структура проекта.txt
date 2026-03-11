@@ -1,8 +1,0 @@
-medical-bot/
-├── cmd/          # точка входа
-├── internal/     # внутренний код
-├── microservices/# Python микросервисы
-├── web/          # веб-интерфейс
-├── migrations/   # SQL миграции
-├── tests/        # тесты
-└── scripts/      # скрипты
