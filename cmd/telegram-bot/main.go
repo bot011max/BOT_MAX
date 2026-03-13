@@ -31,25 +31,18 @@ func main() {
         log.Fatal("Ошибка подключения к БД:", err)
     }
     
+    // Автоматическая миграция
+    db.AutoMigrate(&telegram.TelegramUser{}, &telegram.TelegramSession{}, &telegram.Reminder{})
+    
     // Создаем бота
     bot, err := telegram.NewTelegramBot(token, db)
     if err != nil {
         log.Fatal("Ошибка создания бота:", err)
     }
     
-    // Выбор режима запуска
-    if os.Getenv("TELEGRAM_WEBHOOK_URL") != "" {
-        // Webhook режим (для продакшена)
-        webhookURL := os.Getenv("TELEGRAM_WEBHOOK_URL")
-        if err := bot.StartWebhook(webhookURL); err != nil {
-            log.Fatal("Ошибка запуска webhook:", err)
-        }
-        log.Printf("Бот запущен в webhook-режиме на %s", webhookURL)
-    } else {
-        // Polling режим (для разработки)
-        log.Println("Бот запущен в polling-режиме")
-        go bot.StartPolling()
-    }
+    // Запускаем в polling-режиме (проще для разработки)
+    log.Println("Бот запущен в polling-режиме")
+    go bot.StartPolling()
     
     // Graceful shutdown
     quit := make(chan os.Signal, 1)
