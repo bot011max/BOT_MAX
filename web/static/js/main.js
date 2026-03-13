@@ -1,52 +1,85 @@
-// Основные функции для веб-интерфейса
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Медицинский бот загружен');
-    
-    // Проверяем авторизацию
-    checkAuth();
+
+    // Проверяем соединение с API
+    fetch('/health')
+        .then(response => response.json())
+        .then(data => {
+            console.log('API Status:', data);
+        })
+        .catch(error => {
+            console.error('API Error:', error);
+        });
+
+    // Обработка формы регистрации (если есть)
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+
+    // Обработка формы входа (если есть)
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
 });
 
-function checkAuth() {
-    const token = localStorage.getItem('token');
-    if (token) {
-        // Обновляем интерфейс для авторизованного пользователя
-        updateUIForAuth();
+async function handleRegister(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData);
+
+    try {
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Регистрация успешна!');
+            window.location.href = '/';
+        } else {
+            alert('Ошибка: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Произошла ошибка при регистрации');
     }
 }
 
-function updateUIForAuth() {
-    // Скрываем кнопки входа, показываем выход
-    const loginBtns = document.querySelectorAll('.login-btn');
-    loginBtns.forEach(btn => {
-        btn.style.display = 'none';
-    });
+async function handleLogin(event) {
+    event.preventDefault();
     
-    // Добавляем кнопку выхода
-    const logoutBtn = document.createElement('button');
-    logoutBtn.className = 'btn logout-btn';
-    logoutBtn.textContent = 'Выйти';
-    logoutBtn.onclick = logout;
-    document.querySelector('.container').appendChild(logoutBtn);
-}
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData);
 
-function logout() {
-    localStorage.removeItem('token');
-    window.location.reload();
-}
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
 
-// Функции для работы с API
-async function apiRequest(url, method, data) {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch(url, {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: data ? JSON.stringify(data) : undefined
-    });
-    
-    return await response.json();
+        const result = await response.json();
+        
+        if (result.success) {
+            localStorage.setItem('token', result.data.token);
+            localStorage.setItem('user', JSON.stringify(result.data.user));
+            alert('Вход выполнен успешно!');
+            window.location.href = '/profile';
+        } else {
+            alert('Ошибка: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Произошла ошибка при входе');
+    }
 }
