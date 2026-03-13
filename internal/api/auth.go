@@ -11,7 +11,7 @@ import (
     "golang.org/x/crypto/bcrypt"
     "gorm.io/gorm"
 
-    "BOT_MAX/internal/models"
+    "github.com/bot011max/BOT_MAX/internal/models"
 )
 
 type AuthHandler struct {
