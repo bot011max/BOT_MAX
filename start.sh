@@ -87,6 +87,38 @@ check_error
 echo -e "${GREEN}✅ Зависимости в порядке${NC}"
 
 # =====================================
+# Шаг 3.5: Исправление foreign key в базе данных
+# =====================================
+echo -e "\n${YELLOW}🔧 Шаг 3.5: Проверка и исправление foreign key...${NC}"
+
+# Проверяем, существует ли проблемный foreign key
+FK_EXISTS=$(docker exec bot_max-postgres-1 psql -U postgres -d medical_bot -t -c "
+SELECT COUNT(*) FROM information_schema.table_constraints 
+WHERE constraint_name = 'telegram_users_user_id_fkey' AND table_name = 'telegram_users';
+" | xargs)
+
+if [ "$FK_EXISTS" -gt 0 ]; then
+    echo -e "${YELLOW}⚠️  Обнаружен проблемный foreign key. Исправляю...${NC}"
+    
+    # Удаляем старый foreign key и меняем тип поля
+    docker exec bot_max-postgres-1 psql -U postgres -d medical_bot -c "
+    BEGIN;
+    -- Удаляем foreign key
+    ALTER TABLE telegram_users DROP CONSTRAINT IF EXISTS telegram_users_user_id_fkey;
+    -- Меняем тип поля на text
+    ALTER TABLE telegram_users ALTER COLUMN user_id TYPE text;
+    -- Возвращаем foreign key (опционально)
+    ALTER TABLE telegram_users 
+    ADD CONSTRAINT telegram_users_user_id_fkey 
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+    COMMIT;
+    "
+    echo -e "${GREEN}✅ Foreign key успешно исправлен${NC}"
+else
+    echo -e "${GREEN}✅ Foreign key в порядке${NC}"
+fi
+
+# =====================================
 # Шаг 4: Запуск бота
 # =====================================
 echo -e "\n${GREEN}=====================================${NC}"
