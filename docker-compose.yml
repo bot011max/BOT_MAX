@@ -1,37 +1,54 @@
-# Этап 1: Сборка приложения
-FROM golang:1.22-alpine AS builder
+version: '3.8'
 
-WORKDIR /app
+services:
+  postgres:
+    image: postgres:15
+    container_name: bot_max-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medical_bot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-# Копируем файлы для управления зависимостями
-COPY go.mod go.sum ./
+  app:
+    build: .
+    container_name: bot_max-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: medical_bot
+      JWT_SECRET: your-super-secret-key-change-this
+      PORT: 8080
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+    volumes:
+      - ./web:/root/web
+      - ./:/app
+    working_dir: /app
+    command: go run cmd/telegram-bot/main.go
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-# Загружаем все зависимости
-# Флаг -x показывает подробный вывод (можно убрать)
-RUN go mod download -x
-
-# Копируем весь исходный код
-COPY . .
-
-# Собираем приложение (статическая сборка)
-RUN go build -o medical-bot -ldflags="-w -s" ./cmd/server/main.go
-
-# Этап 2: Финальный образ
-FROM alpine:latest
-
-# Устанавливаем необходимые сертификаты и временную зону
-RUN apk --no-cache add ca-certificates tzdata
-
-WORKDIR /root/
-
-# Копируем скомпилированный бинарный файл из этапа сборки
-COPY --from=builder /app/medical-bot .
-
-# Копируем веб-файлы (если нужны)
-COPY --from=builder /app/web ./web
-
-# Открываем порт
-EXPOSE 8080
-
-# Запускаем приложение
-CMD ["./medical-bot"]
+volumes:
+  postgres_data:
+    driver: local
