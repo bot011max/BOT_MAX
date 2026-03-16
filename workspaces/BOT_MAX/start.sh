@@ -87,7 +87,59 @@ check_error
 echo -e "${GREEN}✅ Зависимости в порядке${NC}"
 
 # =====================================
-# Шаг 4: Запуск бота
+# Шаг 4: Проверка и исправление таблицы в БД
+# =====================================
+echo -e "\n${YELLOW}🔧 Шаг 4: Проверка структуры таблицы...${NC}"
+
+# Проверяем, существует ли таблица telegram_users
+TABLE_EXISTS=$(docker exec bot_max-postgres-1 psql -U postgres -d medical_bot -t -c "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'telegram_users');" | xargs)
+
+if [ "$TABLE_EXISTS" = "t" ]; then
+    echo -e "${GREEN}✅ Таблица telegram_users существует${NC}"
+    
+    # Добавляем недостающие поля (если их нет)
+    echo -e "${YELLOW}📊 Добавление недостающих полей...${NC}"
+    
+    docker exec bot_max-postgres-1 psql -U postgres -d medical_bot -c "
+    DO \$\$
+    BEGIN
+        BEGIN
+            ALTER TABLE telegram_users ADD COLUMN email VARCHAR(255);
+            RAISE NOTICE 'Поле email добавлено';
+        EXCEPTION
+            WHEN duplicate_column THEN RAISE NOTICE 'Поле email уже существует';
+        END;
+        
+        BEGIN
+            ALTER TABLE telegram_users ADD COLUMN language_code VARCHAR(10);
+            RAISE NOTICE 'Поле language_code добавлено';
+        EXCEPTION
+            WHEN duplicate_column THEN RAISE NOTICE 'Поле language_code уже существует';
+        END;
+        
+        BEGIN
+            ALTER TABLE telegram_users ADD COLUMN auth_token VARCHAR(50);
+            RAISE NOTICE 'Поле auth_token добавлено';
+        EXCEPTION
+            WHEN duplicate_column THEN RAISE NOTICE 'Поле auth_token уже существует';
+        END;
+        
+        BEGIN
+            ALTER TABLE telegram_users ADD COLUMN token_expires TIMESTAMP;
+            RAISE NOTICE 'Поле token_expires добавлено';
+        EXCEPTION
+            WHEN duplicate_column THEN RAISE NOTICE 'Поле token_expires уже существует';
+        END;
+    END
+    \$\$;"
+    
+    echo -e "${GREEN}✅ Структура таблицы проверена и обновлена${NC}"
+else
+    echo -e "${YELLOW}⚠️ Таблица telegram_users не найдена. Будет создана автоматически при запуске.${NC}"
+fi
+
+# =====================================
+# Шаг 5: Запуск бота
 # =====================================
 echo -e "\n${GREEN}=====================================${NC}"
 echo -e "${GREEN}✅ ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ!${NC}"
