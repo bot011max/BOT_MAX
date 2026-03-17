@@ -1,13 +1,19 @@
-// internal/monitoring/metrics.go
+# Создаем директорию для monitoring
+mkdir -p internal/monitoring
+
+# Создаем файл metrics.go
+cat > internal/monitoring/metrics.go << 'EOF'
 package monitoring
 
 import (
+    "time"
+
+    "github.com/gin-gonic/gin"
     "github.com/prometheus/client_golang/prometheus"
     "github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
-    // HTTP метрики
     HTTPRequestsTotal = promauto.NewCounterVec(
         prometheus.CounterOpts{
             Name: "http_requests_total",
@@ -25,38 +31,6 @@ var (
         []string{"method", "endpoint"},
     )
 
-    // Бизнес метрики
-    ActiveUsers = promauto.NewGauge(
-        prometheus.GaugeOpts{
-            Name: "active_users_total",
-            Help: "Total number of active users",
-        },
-    )
-
-    PrescriptionsCreated = promauto.NewCounter(
-        prometheus.CounterOpts{
-            Name: "prescriptions_created_total",
-            Help: "Total number of prescriptions created",
-        },
-    )
-
-    // Метрики безопасности
-    FailedLogins = promauto.NewCounterVec(
-        prometheus.CounterOpts{
-            Name: "failed_logins_total",
-            Help: "Total number of failed login attempts",
-        },
-        []string{"reason"},
-    )
-
-    WAFBlocks = promauto.NewCounterVec(
-        prometheus.CounterOpts{
-            Name: "waf_blocks_total",
-            Help: "Total number of requests blocked by WAF",
-        },
-        []string{"rule"},
-    )
-
     RateLimiterBlocks = promauto.NewCounterVec(
         prometheus.CounterOpts{
             Name: "rate_limiter_blocks_total",
@@ -65,51 +39,23 @@ var (
         []string{"ip"},
     )
 
-    // Метрики базы данных
-    DatabaseQueriesTotal = promauto.NewCounterVec(
+    LoginAttempts = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "database_queries_total",
-            Help: "Total number of database queries",
+            Name: "login_attempts_total",
+            Help: "Total number of login attempts",
         },
-        []string{"operation", "table"},
-    )
-
-    DatabaseQueryDuration = promauto.NewHistogramVec(
-        prometheus.HistogramOpts{
-            Name:    "database_query_duration_seconds",
-            Help:    "Database query duration in seconds",
-            Buckets: prometheus.DefBuckets,
-        },
-        []string{"operation", "table"},
-    )
-
-    // Метрики очередей
-    QueueSize = promauto.NewGaugeVec(
-        prometheus.GaugeOpts{
-            Name: "queue_size",
-            Help: "Current size of the queue",
-        },
-        []string{"queue_name"},
-    )
-
-    // Метрики Telegram бота
-    TelegramMessagesTotal = promauto.NewCounterVec(
-        prometheus.CounterOpts{
-            Name: "telegram_messages_total",
-            Help: "Total number of Telegram messages",
-        },
-        []string{"type", "status"},
-    )
-
-    TelegramActiveChats = promauto.NewGauge(
-        prometheus.GaugeOpts{
-            Name: "telegram_active_chats_total",
-            Help: "Total number of active Telegram chats",
-        },
+        []string{"status"},
     )
 )
 
-// Middleware для сбора метрик
+func InitMetrics() {
+    // Инициализация метрик
+    prometheus.Register(HTTPRequestsTotal)
+    prometheus.Register(HTTPRequestDuration)
+    prometheus.Register(RateLimiterBlocks)
+    prometheus.Register(LoginAttempts)
+}
+
 func MetricsMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         start := time.Now()
@@ -131,3 +77,4 @@ func MetricsMiddleware() gin.HandlerFunc {
         ).Observe(duration)
     }
 }
+EOF
