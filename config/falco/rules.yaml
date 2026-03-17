@@ -1,0 +1,138 @@
+# config/falco/rules.yaml
+- required_plugin_versions:
+  - name: falco
+    version: 0.36.0
+
+- macro: container
+  condition: (container.id != host)
+
+# Обнаружение попыток эскалации привилегий
+- rule: Privilege Escalation Attempt
+  desc: Обнаружена попытка повышения привилегий в контейнере
+  condition: >
+    container and
+    (evt.type in (setuid, setgid) and
+     evt.arg.uid=0 or evt.arg.gid=0) and
+    not proc.name in (sshd, crond, supervisord)
+  output: >
+    Попытка эскалации привилегий (user=%user.name command=%proc.cmdline
+    uid=%evt.arg.uid gid=%evt.arg.gid container=%container.info)
+  priority: CRITICAL
+  tags: [privilege_escalation, container]
+
+# Обнаружение шелл-кода в контейнере
+- rule: Shell Spawned in Container
+  desc: Обнаружен запуск шелла в контейнере
+  condition: >
+    container and
+    proc.name in (bash, sh, zsh, dash) and
+    not proc.name in (docker-entrypoint, supervisord) and
+    not proc.pname in (docker-entrypoint, supervisord)
+  output: >
+    Шелл запущен в контейнере (user=%user.name command=%proc.cmdline
+    parent=%proc.pname container=%container.info)
+  priority: WARNING
+  tags: [shell, container]
+
+# Обнаружение криптомайнеров
+- rule: Crypto Miner Detected
+  desc: Обнаружен процесс криптомайнера
+  condition: >
+    container and
+    proc.name in (minerd, cpuminer, xmrig, ccminer) or
+    proc.cmdline contains "stratum+tcp" or
+    proc.cmdline contains "mine.cryptonight"
+  output: >
+    Криптомайнер обнаружен (user=%user.name command=%proc.cmdline container=%container.info)
+  priority: CRITICAL
+  tags: [crypto_miner, malware]
+
+# Обнаружение сетевого сканирования
+- rule: Network Scanning Detected
+  desc: Обнаружено сетевое сканирование
+  condition: >
+    container and
+    evt.type=connect and
+    evt.dir=< and
+    (fd.ip != "127.0.0.1" and fd.ip != "::1") and
+    (proc.name in (nmap, masscan, zmap, hping3) or
+     proc.cmdline contains "nc -zv" or
+     proc.cmdline contains "scan")
+  output: >
+    Сетевое сканирование (user=%user.name command=%proc.cmdline
+    target=%fd.ip container=%container.info)
+  priority: HIGH
+  tags: [network_scan, attack]
+
+# Обнаружение подозрительных сетевых соединений
+- rule: Suspicious Outbound Connection
+  desc: Подозрительное исходящее соединение
+  condition: >
+    container and
+    evt.type=connect and
+    evt.dir=< and
+    not fd.sport in (80, 443, 53, 8080, 8443) and
+    not fd.snet in (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+  output: >
+    Подозрительное исходящее соединение (user=%user.name command=%proc.cmdline
+    target=%fd.ip:%fd.port container=%container.info)
+  priority: WARNING
+  tags: [network, suspicious]
+
+# Обнаружение попыток чтения чувствительных файлов
+- rule: Read Sensitive File
+  desc: Чтение чувствительного файла
+  condition: >
+    container and
+    evt.type=open and
+    evt.dir=< and
+    fd.name in (/etc/shadow, /etc/passwd, /root/.ssh/id_rsa, /var/lib/postgresql/data/pg_hba.conf)
+  output: >
+    Чтение чувствительного файла (user=%user.name command=%proc.cmdline
+    file=%fd.name container=%container.info)
+  priority: HIGH
+  tags: [filesystem, sensitive_data]
+
+# Обнаружение создания файлов с подозрительными расширениями
+- rule: Create Suspicious File
+  desc: Создание файла с подозрительным расширением
+  condition: >
+    container and
+    evt.type=open and
+    evt.dir=< and
+    evt.arg.flags contains O_CREAT and
+    (fd.name endswith .php or
+     fd.name endswith .jsp or
+     fd.name endswith .asp or
+     fd.name endswith .sh or
+     fd.name endswith .py or
+     fd.name endswith .pl)
+  output: >
+    Создание подозрительного файла (user=%user.name command=%proc.cmdline
+    file=%fd.name container=%container.info)
+  priority: WARNING
+  tags: [filesystem, webshell]
+
+# Обнаружение запуска отладчиков
+- rule: Debugger Attached
+  desc: Обнаружен запуск отладчика
+  condition: >
+    container and
+    proc.name in (gdb, strace, ltrace, ptrace) and
+    not proc.pname in (docker-init)
+  output: >
+    Отладчик запущен (user=%user.name command=%proc.cmdline container=%container.info)
+  priority: HIGH
+  tags: [debugger, reverse_engineering]
+
+# Обнаружение попыток монтирования
+- rule: Mount Attempt
+  desc: Попытка монтирования в контейнере
+  condition: >
+    container and
+    evt.type=mount and
+    evt.dir=<
+  output: >
+    Попытка монтирования (user=%user.name command=%proc.cmdline container=%container.info)
+  priority: CRITICAL
+  tags: [mount, privilege_escalation]
