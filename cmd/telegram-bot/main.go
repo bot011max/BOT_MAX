@@ -65,6 +65,9 @@ func main() {
     
     log.Println("База данных успешно подключена")
     
+    // Удаляем проблемный foreign key, если он есть
+    db.Exec("ALTER TABLE telegram_users DROP CONSTRAINT IF EXISTS telegram_users_user_id_fkey;")
+    
     // Автоматическая миграция
     if err := db.AutoMigrate(&telegram.TelegramUser{}, &telegram.TelegramSession{}, &telegram.Reminder{}); err != nil {
         log.Fatal("Ошибка миграции:", err)
