@@ -1,4 +1,3 @@
-# config/grafana/dashboards/security.json
 {
   "dashboard": {
     "title": "Security Monitoring Dashboard",
