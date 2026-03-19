@@ -1,4 +1,3 @@
-# Создаем директорию для middleware
 mkdir -p internal/middleware
 
 # Создаем файл auth middleware
