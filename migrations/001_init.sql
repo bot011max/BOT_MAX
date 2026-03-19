@@ -1,73 +1,92 @@
--- Создание таблицы пользователей
+-- Инициализация базы данных
+-- Запускается автоматически при старте PostgreSQL
+
+-- Включение расширений
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Таблица пользователей
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    role VARCHAR(50) NOT NULL DEFAULT 'patient',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    role TEXT NOT NULL DEFAULT 'patient',
+    twofa_secret TEXT,
+    twofa_enabled BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- Индексы для быстрого поиска
+    CONSTRAINT email_length CHECK (char_length(email) < 255)
 );
 
--- Создание таблицы пациентов
-CREATE TABLE IF NOT EXISTS patients (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-    birth_date DATE,
-    phone VARCHAR(20),
-    snils VARCHAR(20) UNIQUE,
-    polis VARCHAR(30),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Создание таблицы врачей
-CREATE TABLE IF NOT EXISTS doctors (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-    specialty VARCHAR(100),
-    license_num VARCHAR(50),
-    experience INTEGER,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Создание таблицы назначений
-CREATE TABLE IF NOT EXISTS prescriptions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID REFERENCES patients(id) ON DELETE CASCADE,
-    doctor_id UUID REFERENCES doctors(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    dosage VARCHAR(100),
-    form VARCHAR(100),
-    frequency VARCHAR(100),
-    duration VARCHAR(100),
-    instructions TEXT,
-    start_date DATE,
-    end_date DATE,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Создание таблицы напоминаний
-CREATE TABLE IF NOT EXISTS reminders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    prescription_id UUID REFERENCES prescriptions(id) ON DELETE CASCADE,
-    patient_id UUID REFERENCES patients(id) ON DELETE CASCADE,
-    scheduled_time TIMESTAMP NOT NULL,
-    message TEXT,
-    status VARCHAR(50) DEFAULT 'pending',
-    sent_at TIMESTAMP,
-    acknowledged_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Создание индексов
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_prescriptions_patient ON prescriptions(patient_id);
-CREATE INDEX idx_prescriptions_doctor ON prescriptions(doctor_id);
-CREATE INDEX idx_reminders_patient ON reminders(patient_id);
-CREATE INDEX idx_reminders_scheduled ON reminders(scheduled_time) WHERE status = 'pending';
+
+-- Таблица для Telegram связи
+CREATE TABLE IF NOT EXISTS telegram_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    telegram_id BIGINT UNIQUE NOT NULL,
+    chat_id BIGINT NOT NULL,
+    username TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    auth_code TEXT,
+    auth_code_expires TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT telegram_id_unique UNIQUE (telegram_id)
+);
+
+CREATE INDEX idx_telegram_user_id ON telegram_users(user_id);
+CREATE INDEX idx_telegram_telegram_id ON telegram_users(telegram_id);
+
+-- Таблица для медицинских записей (ЗАШИФРОВАНО)
+CREATE TABLE IF NOT EXISTS medical_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    encrypted_data BYTEA NOT NULL,  -- Данные хранятся в зашифрованном виде
+    iv BYTEA NOT NULL,               -- Вектор инициализации
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Таблица для аудита (НЕИЗМЕНЯЕМЫЕ ЛОГИ)
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    event_type TEXT NOT NULL,
+    user_id UUID,
+    ip_address INET,
+    user_agent TEXT,
+    details JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_created ON audit_logs(created_at);
+CREATE INDEX idx_audit_user ON audit_logs(user_id);
+
+-- Таблица для черного списка токенов
+CREATE TABLE IF NOT EXISTS token_blacklist (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    token_id TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_token_blacklist_expires ON token_blacklist(expires_at);
+
+-- Триггер для автоматического обновления updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_users_updated_at
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
