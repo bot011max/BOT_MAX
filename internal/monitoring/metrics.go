@@ -1,4 +1,3 @@
-# Создаем директорию для monitoring
 mkdir -p internal/monitoring
 
 # Создаем файл metrics.go
