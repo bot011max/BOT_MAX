@@ -1,0 +1,58 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Ежедневно
+  workflow_dispatch:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Snyk Security Scan
+      uses: snyk/actions/golang@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --sarif-file-output=snyk.sarif
+
+    - name: Upload Snyk results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: snyk.sarif
+
+    - name: Run Dependency Check
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'Medical Bot'
+        path: '.'
+        format: 'SARIF'
+        out: 'dependency-check-results.sarif'
+
+    - name: Upload Dependency Check results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'dependency-check-results.sarif'
+
+    - name: Run OWASP ZAP Scan
+      uses: zaproxy/action-baseline@v0.12.0
+      with:
+        target: 'https://your-domain.com'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'
