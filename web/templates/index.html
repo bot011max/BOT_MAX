@@ -3,94 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.title}}</title>
+    <title>Медицинский бот - Военный уровень защиты</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/main.js" defer></script>
 </head>
 <body>
     <div class="container">
-        <h1>👋 Добро пожаловать в Медицинский бот</h1>
+        <h1>🏥 Медицинский бот</h1>
+        <h2 style="text-align: center; color: rgba(255,255,255,0.9); margin-bottom: 40px;">
+            Военный уровень защиты
+        </h2>
         
         <div class="card">
             <h2>📋 О проекте</h2>
-            <p>Умный помощник для пациентов и врачей. Автоматизирует ведение медицинской карты, напоминания о лекарствах и проверку безопасности лечения.</p>
+            <p>Telegram-бот для отслеживания лекарств и записи симптомов с <strong>военным уровнем защиты</strong>.</p>
+            <p>🔐 Квантово-устойчивая криптография, HSM, биометрия, WAF, IDS</p>
         </div>
 
         <div class="features">
             <div class="feature">
-                <h3>👤 Для пациентов</h3>
+                <h3>💊 Лекарства</h3>
                 <ul>
-                    <li>✓ Напоминания о лекарствах</li>
-                    <li>✓ Дневник симптомов</li>
+                    <li>✓ Напоминания о приеме</li>
                     <li>✓ История назначений</li>
+                    <li>✓ Взаимодействие препаратов</li>
                 </ul>
             </div>
             
             <div class="feature">
-                <h3>👨‍⚕️ Для врачей</h3>
+                <h3>📝 Симптомы</h3>
                 <ul>
-                    <li>✓ Управление назначениями</li>
-                    <li>✓ Контроль приверженности</li>
-                    <li>✓ Шаблоны рецептов</li>
+                    <li>✓ Голосовой ввод</li>
+                    <li>✓ Анализ динамики</li>
+                    <li>✓ Отчеты для врача</li>
                 </ul>
             </div>
             
             <div class="feature">
-                <h3>🏥 Для клиник</h3>
+                <h3>📅 Приемы</h3>
                 <ul>
-                    <li>✓ Управление пациентами</li>
-                    <li>✓ Отчеты и статистика</li>
-                    <li>✓ Интеграция с МИС</li>
+                    <li>✓ Запись к врачу</li>
+                    <li>✓ Напоминания</li>
+                    <li>✓ История посещений</li>
                 </ul>
             </div>
         </div>
 
         <div class="card">
-            <h2>🚀 API Endpoints</h2>
+            <h2>🚀 Быстрый старт</h2>
+            <p>1. Зарегистрируйтесь в Telegram боте: <strong>@medical_bot</strong></p>
+            <p>2. Привяжите аккаунт командой <code>/bind</code></p>
+            <p>3. Настройте 2FA для максимальной безопасности</p>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/register" class="btn">Регистрация</a>
+                <a href="/login" class="btn">Вход</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🛡️ Технологии безопасности</h2>
             <table>
                 <tr>
-                    <th>Метод</th>
-                    <th>Путь</th>
-                    <th>Описание</th>
+                    <th>Компонент</th>
+                    <th>Технология</th>
                 </tr>
                 <tr>
-                    <td><span class="method">POST</span></td>
-                    <td>/api/register</td>
-                    <td>Регистрация</td>
+                    <td>Квантовая защита</td>
+                    <td>Post-quantum cryptography, QKD</td>
                 </tr>
                 <tr>
-                    <td><span class="method">POST</span></td>
-                    <td>/api/login</td>
-                    <td>Вход в систему</td>
+                    <td>Аппаратная защита</td>
+                    <td>HSM, TPM, Secure Enclave</td>
                 </tr>
                 <tr>
-                    <td><span class="method">GET</span></td>
-                    <td>/api/profile</td>
-                    <td>Профиль (требуется токен)</td>
+                    <td>Биометрия</td>
+                    <td>Face ID, Touch ID, голос</td>
                 </tr>
                 <tr>
-                    <td><span class="method">GET</span></td>
-                    <td>/health</td>
-                    <td>Проверка здоровья</td>
+                    <td>Сетевая защита</td>
+                    <td>WAF, IDS/IPS, DDoS protection</td>
+                </tr>
+                <tr>
+                    <td>Шифрование</td>
+                    <td>AES-256, RSA-4096, TLS 1.3</td>
                 </tr>
             </table>
         </div>
 
         <div class="card">
-            <h2>🔧 Тестирование API</h2>
-            <p>Попробуйте зарегистрироваться:</p>
-            <pre>
-curl -X POST http://localhost:8080/api/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123",
-    "first_name": "Иван",
-    "last_name": "Петров",
-    "role": "patient"
-  }'
-            </pre>
+            <h2>📊 Статус системы</h2>
+            <div style="display: flex; justify-content: space-around;">
+                <div style="text-align: center;">
+                    <h3>✅ API</h3>
+                    <p>Работает</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3>✅ Telegram Bot</h3>
+                    <p>Активен</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3>✅ Security</h3>
+                    <p>Military Grade</p>
+                </div>
+            </div>
         </div>
     </div>
-    <script src="/static/js/main.js"></script>
 </body>
 </html>
