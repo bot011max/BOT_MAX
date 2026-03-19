@@ -1,19 +1,37 @@
 FROM golang:1.22-alpine AS builder
 
+# Установка зависимостей для сборки
+RUN apk add --no-cache git ca-certificates tzdata
+
 WORKDIR /app
+
+# Копирование модулей
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Копирование исходного кода
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api
 
+# Сборка приложения
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o api ./cmd/api
+
+# Финальный образ
 FROM alpine:latest
 
+# Установка runtime зависимостей
 RUN apk --no-cache add ca-certificates tzdata curl
-RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app
+
+# Создание пользователя
+RUN addgroup -g 1000 -S app && \
+    adduser -u 1000 -S app -G app
 
 WORKDIR /app
+
+# Копирование бинарного файла
 COPY --from=builder --chown=app:app /app/api .
+
+# Создание директории для логов
+RUN mkdir -p /var/log && chown -R app:app /var/log
 
 USER app
 
