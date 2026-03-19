@@ -1,10 +1,10 @@
 package logger
 
 import (
+    "fmt"
     "log"
     "os"
     "runtime"
-    "fmt"
     "time"
 )
 
@@ -18,44 +18,8 @@ const (
     FATAL
 )
 
-type Logger struct {
-    level LogLevel
-    file  *os.File
-}
-
-func NewLogger(level LogLevel, logFile string) *Logger {
-    file, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    return &Logger{
-        level: level,
-        file:  file,
-    }
-}
-
-func (l *Logger) log(level LogLevel, format string, args ...interface{}) {
-    if level < l.level {
-        return
-    }
-    
-    _, file, line, _ := runtime.Caller(2)
-    timestamp := time.Now().Format("2006-01-02 15:04:05")
-    
-    msg := fmt.Sprintf(format, args...)
-    logLine := fmt.Sprintf("[%s] [%s] %s:%d - %s\n", 
-        timestamp, levelToString(level), file, line, msg)
-    
-    l.file.WriteString(logLine)
-    
-    if level == FATAL {
-        os.Exit(1)
-    }
-}
-
-func levelToString(level LogLevel) string {
-    switch level {
+func (l LogLevel) String() string {
+    switch l {
     case DEBUG:
         return "DEBUG"
     case INFO:
@@ -68,6 +32,47 @@ func levelToString(level LogLevel) string {
         return "FATAL"
     default:
         return "UNKNOWN"
+    }
+}
+
+type Logger struct {
+    level  LogLevel
+    file   *os.File
+    logger *log.Logger
+}
+
+func NewLogger(level LogLevel, logFile string) *Logger {
+    file, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatal("Failed to open log file:", err)
+    }
+
+    return &Logger{
+        level:  level,
+        file:   file,
+        logger: log.New(file, "", 0),
+    }
+}
+
+func (l *Logger) log(level LogLevel, format string, args ...interface{}) {
+    if level < l.level {
+        return
+    }
+
+    _, file, line, ok := runtime.Caller(2)
+    if !ok {
+        file = "unknown"
+        line = 0
+    }
+
+    timestamp := time.Now().Format("2006-01-02 15:04:05.000")
+    msg := fmt.Sprintf(format, args...)
+    
+    l.logger.Printf("[%s] [%s] %s:%d - %s", timestamp, level.String(), file, line, msg)
+
+    if level == FATAL {
+        l.file.Close()
+        os.Exit(1)
     }
 }
 
@@ -89,4 +94,8 @@ func (l *Logger) Error(format string, args ...interface{}) {
 
 func (l *Logger) Fatal(format string, args ...interface{}) {
     l.log(FATAL, format, args...)
+}
+
+func (l *Logger) Close() {
+    l.file.Close()
 }
