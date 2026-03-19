@@ -1,0 +1,124 @@
+{
+  "dashboard": {
+    "title": "Medical Bot Dashboard",
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "HTTP Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m])) by (endpoint)",
+            "legendFormat": "{{ endpoint }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "title": "Request Duration (p95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "title": "Active Users by Role",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "active_users_total",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8}
+      },
+      {
+        "title": "Subscriptions by Tier",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "subscriptions_total",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8}
+      },
+      {
+        "title": "Failed Logins",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(failed_logins_total[5m])) by (reason)",
+            "legendFormat": "{{ reason }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8}
+      },
+      {
+        "title": "Database Queries",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(database_queries_total[5m])) by (table)",
+            "legendFormat": "{{ table }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "title": "Queue Size",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "queue_size",
+            "legendFormat": "{{ queue_name }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "title": "Telegram Messages",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(telegram_messages_total[5m])) by (command)",
+            "legendFormat": "{{ command }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "title": "Active Telegram Chats",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "telegram_active_chats_total"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "rate(failed_logins_total[1m]) > 10",
+          "name": "Brute Force Alert",
+          "iconColor": "red"
+        },
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "rate(http_requests_total{status=\"5xx\"}[5m]) > 0.1",
+          "name": "High Error Rate",
+          "iconColor": "orange"
+        }
+      ]
+    }
+  }
+}
