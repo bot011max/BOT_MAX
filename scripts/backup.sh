@@ -1,6 +1,3 @@
-#!/bin/bash
-# Автоматическое резервное копирование с шифрованием
-
 BACKUP_DIR="/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="${BACKUP_DIR}/medical_bot_${DATE}.enc"
