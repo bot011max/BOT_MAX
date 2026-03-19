@@ -1,4 +1,3 @@
-# internal/models/telegram.go
 cat > internal/models/telegram.go << 'EOF'
 package models
 
