@@ -1,3 +1,4 @@
+cat > go.mod << 'EOF'
 module github.com/bot011max/medical-bot
 
 go 1.22
@@ -17,3 +18,4 @@ require (
     gorm.io/driver/postgres v1.5.7
     gorm.io/gorm v1.25.9
 )
+EOF
