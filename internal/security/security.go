@@ -1,4 +1,3 @@
-cat > internal/security/security.go << 'EOF'
 package security
 
 import (
@@ -33,4 +32,3 @@ func InitAuditLogger() error {
     log.Println("Audit logger initialized")
     return nil
 }
-EOF
