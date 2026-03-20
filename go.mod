@@ -1,4 +1,3 @@
-cat > go.mod << 'EOF'
 module github.com/bot011max/medical-bot
 
 go 1.22
