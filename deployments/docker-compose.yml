@@ -57,20 +57,13 @@ services:
       DB_NAME: medical_bot
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redispass}
-      JWT_SECRET: ${JWT_SECRET:-super-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-super-secret-key}
       ENVIRONMENT: ${ENVIRONMENT:-development}
     ports:
       - "8080:8080"
-    volumes:
-      - ./logs:/var/log
     networks:
       - internal
       - monitoring
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     restart: unless-stopped
 
   telegram-bot:
@@ -92,11 +85,9 @@ services:
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redispass}
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
-      JWT_SECRET: ${JWT_SECRET:-super-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-super-secret-key}
     ports:
       - "8081:8081"
-    volumes:
-      - ./logs:/var/log
     networks:
       - internal
     restart: unless-stopped
@@ -111,7 +102,6 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=30d'
-      - '--web.enable-lifecycle'
     ports:
       - "9090:9090"
     networks:
@@ -124,7 +114,6 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
